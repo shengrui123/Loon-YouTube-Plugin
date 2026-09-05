@@ -1,0 +1,53 @@
+#!name = YouTube & Music 增强
+#!desc = YouTube 去广告、精简底栏、画中画、后台播放与字幕翻译；YouTube Music 精简底栏、后台播放与歌词翻译。
+#!author = Local build (Maasea + DualSubs)
+#!homepage = https://github.com/Maasea/sgmodule
+#!icon = https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/YouTube.png
+#!system = iOS,iPadOS,macOS
+#!system_version = 15
+#!loon_version = 3.5.1(983)
+#!tag = YouTube,YouTube Music,去广告,字幕,歌词
+#!type = normal
+
+# 说明：
+# 1. 广告过滤、按钮精简、画中画及后台播放由 Maasea 的 protobuf 脚本处理。
+# 2. YouTube Music 歌词翻译由 DualSubs 处理。
+# 3. 请勿同时启用其他 YouTube 去广告/字幕/歌词插件，以免首条 Script 匹配冲突。
+
+[Argument]
+captionLang = select,"zh-Hans","zh-Hant","en","ja","ko","off",tag=YouTube 字幕翻译,desc=目标语言；off 为关闭。仅在视频本身提供字幕时生效。
+blockUpload = switch,true,tag=移除上传按钮,desc=移除 YouTube 与 YouTube Music 底栏中的上传入口。
+blockImmersive = switch,true,tag=移除选段按钮,desc=移除 YouTube Music 底栏中的“选段/Samples”入口。
+blockShorts = switch,true,tag=移除 Shorts 按钮,desc=移除 YouTube 底栏中的 Shorts 入口。
+lyricsEnabled = switch,true,tag=YouTube Music 歌词翻译,desc=为 YouTube Music 添加双语翻译歌词。
+Type = select,"Official","Translate",tag=字幕处理类型,desc=DualSubs 内部兼容参数；歌词翻译建议保持 Official。
+Types = select,"Translate","Official",tag=歌词类型,desc=Translate 为机器翻译；Official 优先使用官方内容。
+Position = select,"Forward","Reverse",tag=歌词顺序,desc=Forward 原文在前；Reverse 译文在前。
+Vendor = select,"Google","Microsoft",tag=翻译服务,desc=选择歌词翻译服务。
+AutoCC = switch,true,tag=自动显示字幕,desc=播放视频时自动打开可用字幕。
+ShowOnly = switch,false,tag=仅显示译文,desc=关闭时显示原文与译文，开启时仅显示译文。
+debug = switch,false,tag=增强脚本调试,desc=仅排查问题时开启。
+LogLevel = select,"WARN","OFF","ERROR","INFO","DEBUG","ALL",tag=翻译日志等级,desc=建议保持 WARN。
+
+[Rewrite]
+# 阻断仍使用旧广告播放链路的空广告请求，返回 1×1 图片以降低重试开销。
+request if ${url} ~= /^https?:\/\/[\w-]+\.googlevideo\.com\/initplayback(?:\?.*)?&oad(?:[=&]|$)/i then reject_img(200)
+# 阻断网页/旧接口的广告统计，不影响正常播放统计。
+request if ${url} ~= /^https?:\/\/(?:www|s)\.youtube\.com\/(?:api\/stats\/ads|pagead\/|ptracking(?:\?|\/))/i then reject(200)
+request if ${url} ~= /^https?:\/\/s\.youtube\.com\/api\/stats\/qoe\?.*\badcontext\b/i then reject(200)
+
+[Script]
+# YouTube / YouTube Music：视频、瀑布流、搜索、Shorts 广告；按钮精简；画中画；后台播放；字幕翻译。
+# browse?subtype=Translate 留给下方 DualSubs 歌词响应，避免 Loon 的首条 Response Script 匹配冲突。
+response if ${url} ~= /^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/(?!browse\?.*\bsubtype=Translate\b)(?:browse|next|player|search|reel\/reel_watch_sequence|guide|account\/get_setting|get_watch|log_event|config)(?:\?.*)?$/i then script("https://raw.githubusercontent.com/Maasea/sgmodule/master/Script/Youtube/youtube.response.js", {${captionLang}, ${blockUpload}, ${blockImmersive}, ${blockShorts}, ${debug}}) with tag="YouTube 增强响应", timeout=30, requires_body=true, binary_body_mode=true, debug=${debug}
+
+# 新版播放初始化与事件请求处理。
+request if ${url} ~= /^https?:\/\/[\w-]+\.googlevideo\.com\/initplayback(?:\?.*)?&ack(?:[=&]|$)/i then script("https://raw.githubusercontent.com/Maasea/sgmodule/master/Script/Youtube/youtube.request.js", {${captionLang}}) with tag="YouTube 播放初始化", timeout=30, requires_body=true, binary_body_mode=true, debug=${debug}
+request if ${url} ~= /^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/log_event(?:\?.*)?$/i then script("https://raw.githubusercontent.com/Maasea/sgmodule/master/Script/Youtube/youtube.request.js") with tag="YouTube 事件净化", timeout=30, requires_body=true, binary_body_mode=true, debug=${debug}
+
+# YouTube Music：在歌词 browse 请求中注入翻译子类型，再处理返回的 protobuf 歌词。
+request if ${url} ~= /^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/browse(?:\?.*)?$/i then script("https://github.com/DualSubs/YouTube/releases/download/v1.5.11/request.bundle.js", {${Type}, ${Types}, ${AutoCC}, ${Position}, ${Vendor}, ${ShowOnly}, ${LogLevel}}) with enable=${lyricsEnabled}, tag="YouTube Music 歌词请求", timeout=30, requires_body=true, binary_body_mode=true
+response if ${url} ~= /^https:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/browse\?.*\bsubtype=Translate\b/i then script("https://github.com/DualSubs/Universal/releases/latest/download/Translate.response.bundle.js", {${Type}, ${Types}, ${AutoCC}, ${Position}, ${Vendor}, ${ShowOnly}, ${LogLevel}}) with enable=${lyricsEnabled}, tag="YouTube Music 歌词翻译", timeout=30, requires_body=true, binary_body_mode=true
+
+[Mitm]
+hostname = youtubei.googleapis.com, www.youtube.com, s.youtube.com, music.youtube.com, -redirector*.googlevideo.com, *.googlevideo.com
