@@ -1,0 +1,43 @@
+#!name = 中国联通净化
+#!desc = 屏蔽已知广告请求，精简热搜、首页装饰及我的页面推广。钱包、积分、彩铃默认保留，可在参数中单独隐藏。接口变化后可能失效。
+#!author = Codex（Loon 适配）；ddgksf2013（接口参考）
+#!homepage = https://github.com/ddgksf2013/Rewrite
+#!loon_version = 3.5.1(978)
+#!system = iOS,iPadOS
+#!tag = 去广告,应用净化
+#!type = normal
+
+# 版本：1.0.0；语法核对：2026-09-07
+# 接口来源（2025-12-11 / V1.0.4）：
+# https://raw.githubusercontent.com/ddgksf2013/Rewrite/refs/heads/master/AdBlock/ChinaUnicomAds.conf
+# 新版 Rewrite：https://nsloon.app/docs/Rewrite/rewrite_v2/
+# 不依赖外部脚本；开启复写与 MitM 并安装、信任证书。
+
+[Argument]
+clean_search = switch,true,tag=净化搜索热词
+clean_home = switch,true,tag=净化首页装饰,desc=移除首页背景及商城底部标签
+block_promotion = switch,true,tag=屏蔽营销请求,desc=屏蔽智能营销及新人专享接口
+clean_feed = switch,true,tag=屏蔽首页瀑布流,desc=阻止已知瀑布流脚本加载
+clean_profile = switch,true,tag=净化我的页面推广,desc=清空已知横幅及设备图片推广数据
+hide_wallet = switch,false,tag=隐藏钱包模块,desc=可能同时隐藏钱包相关功能入口
+hide_points = switch,false,tag=隐藏积分模块,desc=可能同时隐藏积分展示及入口
+hide_ringtone = switch,false,tag=隐藏彩铃模块
+
+[Rule]
+DOMAIN-SUFFIX,ad.10010.com,REJECT
+
+[Rewrite]
+# 仅匹配已知接口；允许查询参数，避免命中名称相近的其他接口。
+request if ${block_promotion} == true && ${url} ~= /^https?:\/\/m\.client\.10010\.com\/(?:mobileserviceimportant\/customer\/querySmartServicekhd\.htm|clientIndex\/api\/v1\/index\/queryIndexExclusiveOffers)(?:\?|$)/ then reject(200)
+request if ${clean_feed} == true && ${url} ~= /^https?:\/\/img\.client\.10010\.com\/homejingxuan12\/js\/(?:pubuliu|1homeView)[^\/?]*(?:\?|$)/ then reject(200)
+
+# JQ 使用原始字符串；检查对象与字段类型，未知结构保持原样。
+response if ${clean_search} == true && ${url} ~= /^https?:\/\/m\.client\.10010\.com\/search_service\/search\/searchScrollWord(?:\?|$)/ && ${response.status} == 200 then response.json.jq(`if type == "object" then if (."113000004" | type) == "array" then ."113000004" = [] else . end else . end`)
+response if ${clean_home} == true && ${url} ~= /^https?:\/\/m\.client\.10010\.com\/clientIndex\/homefusion\/fuInter(?:\?|$)/ && ${response.status} == 200 then response.json.jq(`if type == "object" then del(."HomeFusion.backGroundQuery") | if (."HomeFusion.bottomLabel" | type) == "object" then del(."HomeFusion.bottomLabel".bottomMallKey) else . end else . end`)
+response if ${clean_profile} == true && ${url} ~= /^https?:\/\/m\.client\.10010\.com\/clientMyPage\/v\d+\/api\/(?:newUserInfo|getDeviceInfo)(?:\?|$)/ && ${response.status} == 200 then response.json.jq(`if type == "object" then if (.data | type) == "object" then .data = {} else . end else . end`)
+response if ${hide_wallet} == true && ${url} ~= /^https?:\/\/m\.client\.10010\.com\/clientMyPage\/v\d+\/api\/myWallet(?:\?|$)/ && ${response.status} == 200 then response.json.jq(`if type == "object" then if (.data | type) == "object" then .data = {} else . end else . end`)
+response if ${hide_points} == true && ${url} ~= /^https?:\/\/m\.client\.10010\.com\/clientMyPage\/v\d+\/api\/myPoints(?:\?|$)/ && ${response.status} == 200 then response.json.jq(`if type == "object" then if (.data | type) == "object" then .data = {} else . end else . end`)
+response if ${hide_ringtone} == true && ${url} ~= /^https?:\/\/m\.client\.10010\.com\/clientMyPage\/v\d+\/api\/myColorfulRingtone(?:\?|$)/ && ${response.status} == 200 then response.json.jq(`if type == "object" then if (.data | type) == "object" then .data = {} else . end else . end`)
+
+[Mitm]
+hostname = m.client.10010.com,img.client.10010.com
