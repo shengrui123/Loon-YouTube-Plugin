@@ -30,3 +30,13 @@
 - [Loon 官方新版 Rewrite 文档](https://nsloon.app/docs/Rewrite/rewrite_v2/)：语法、JQ、参数和最低版本，核对于 2026-09-07。
 - [Loon 官方插件文档](https://nsloon.app/docs/Plugin/)：元数据与插件结构。
 - [ddgksf2013 中国联通规则](https://raw.githubusercontent.com/ddgksf2013/Rewrite/refs/heads/master/AdBlock/ChinaUnicomAds.conf)：接口与目标字段参考，感谢原作者。本文件是另行编写的 Loon 适配，并非原作者官方发布版本。
+
+## 1.1.0：商城与权益底栏配置实验
+
+用户提供的客户端 13.0000 抓包确认，fuInter 的 HomeFusion.bottomLabel 中，bottomMallKey 和 bottomWealthKey 分别包含商城与权益的标题、图标与链接。新增默认开启的“移除商城权益配置（实验）”，删除这两个键，保留其他字段。
+
+尚未验证能否隐藏原生导航：样本中商城的 isLoad 已为字符串 0，不能视为隐藏开关。旧规则已删除商城配置，本次主要补全权益配置移除。App 可能回退内置底栏，不能承诺变为三个按钮。
+
+更新插件后，确认实验开关开启，彻底退出并重新打开联通验证。如无效果可关闭实验开关；要同时恢复旧规则删除的商城配置，还需关闭“净化首页装饰”。
+
+其余三份响应未确认主底栏数量控制字段，未作修改。原始抓包与账号信息不提交仓库。

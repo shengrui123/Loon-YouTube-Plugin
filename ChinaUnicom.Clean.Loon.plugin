@@ -7,7 +7,7 @@
 #!tag = 去广告,应用净化
 #!type = normal
 
-# 版本：1.0.0；语法核对：2026-09-07
+# 版本：1.1.0；语法核对：2026-09-07
 # 接口来源（2025-12-11 / V1.0.4）：
 # https://raw.githubusercontent.com/ddgksf2013/Rewrite/refs/heads/master/AdBlock/ChinaUnicomAds.conf
 # 新版 Rewrite：https://nsloon.app/docs/Rewrite/rewrite_v2/
@@ -16,6 +16,7 @@
 [Argument]
 clean_search = switch,true,tag=净化搜索热词
 clean_home = switch,true,tag=净化首页装饰,desc=移除首页背景及商城底部标签
+clean_bottom_config = switch,true,tag=移除商城权益配置（实验）,desc=删除下发配置但可能回退内置导航
 block_promotion = switch,true,tag=屏蔽营销请求,desc=屏蔽智能营销及新人专享接口
 clean_feed = switch,true,tag=屏蔽首页瀑布流,desc=阻止已知瀑布流脚本加载
 clean_profile = switch,true,tag=净化我的页面推广,desc=清空已知横幅及设备图片推广数据
@@ -38,6 +39,9 @@ response if ${clean_profile} == true && ${url} ~= /^https?:\/\/m\.client\.10010\
 response if ${hide_wallet} == true && ${url} ~= /^https?:\/\/m\.client\.10010\.com\/clientMyPage\/v\d+\/api\/myWallet(?:\?|$)/ && ${response.status} == 200 then response.json.jq(`if type == "object" then if (.data | type) == "object" then .data = {} else . end else . end`)
 response if ${hide_points} == true && ${url} ~= /^https?:\/\/m\.client\.10010\.com\/clientMyPage\/v\d+\/api\/myPoints(?:\?|$)/ && ${response.status} == 200 then response.json.jq(`if type == "object" then if (.data | type) == "object" then .data = {} else . end else . end`)
 response if ${hide_ringtone} == true && ${url} ~= /^https?:\/\/m\.client\.10010\.com\/clientMyPage\/v\d+\/api\/myColorfulRingtone(?:\?|$)/ && ${response.status} == 200 then response.json.jq(`if type == "object" then if (.data | type) == "object" then .data = {} else . end else . end`)
+
+# Experimental: remove server configuration; native tab fallback is not verified.
+response if ${clean_bottom_config} == true && ${url} ~= /^https?:\/\/m\.client\.10010\.com\/clientIndex\/homefusion\/fuInter(?:\?|$)/ && ${response.status} == 200 then response.json.jq(`if type == "object" then if (."HomeFusion.bottomLabel" | type) == "object" then del(."HomeFusion.bottomLabel".bottomMallKey, ."HomeFusion.bottomLabel".bottomWealthKey) else . end else . end`)
 
 [Mitm]
 hostname = m.client.10010.com,img.client.10010.com
