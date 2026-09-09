@@ -1,0 +1,32 @@
+#!name = 闲鱼净化
+#!desc = 屏蔽已知开屏接口，精简首页与搜索非商品卡片。独立开关；接口变化可能失效，未做闲鱼实机验证。
+#!author = Codex
+#!loon_version = 3.5.1(978)
+#!system = iOS,iPadOS
+#!tag = 去广告,应用净化
+#!type = normal
+
+# 版本：1.0.0；语法与接口资料核对：2026-09-09
+# 新版 Rewrite：https://nsloon.app/docs/Rewrite/rewrite_v2/
+# 接口与字段参考：https://github.com/androidcn/userscripts/blob/main/goofish.plugin
+# https://github.com/androidcn/userscripts/blob/main/goofish.js
+# https://github.com/androidcn/userscripts/blob/main/goofishSearch.js
+# 开屏接口参考：https://github.com/BlueGrave/Surge/blob/master/Module/WhiteList.sgmodule
+# 单文件，无外部脚本。需开启复写与 MitM，并安装、信任证书。
+
+[Argument]
+block_splash = switch,true,tag=屏蔽已知开屏请求,desc=仅覆盖淘宝域名下的已知闲鱼开屏接口
+clean_home = switch,true,tag=首页仅保留商品类型,desc=删除有明确类型的非商品卡片；也可能移除活动和推荐入口
+clean_search = switch,true,tag=搜索仅保留商品类型,desc=删除有明确类型的非商品结果；不保证移除标为商品的推广
+hide_publish_float = switch,false,tag=隐藏发布浮层（实验）,desc=屏蔽已知策略接口；可能影响其他策略入口
+
+[Rewrite]
+request if ${block_splash} == true && ${url} ~= /^https:\/\/acs\.m\.taobao\.com\/gw\/mtop\.taobao\.idle\.home\.welcome\// then reject_dict(200)
+request if ${hide_publish_float} == true && ${url} ~= /^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.user\.strategy\.get\// then reject_dict(200)
+
+# 仅处理已知数组；字段缺失、类型异常的卡片原样保留。没有删除时不改计数。
+response if ${clean_home} == true && ${url} ~= /^https:\/\/g-acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlehome\.home\.nextfresh\// && ${response.status} == 200 then response.json.jq(`if type == "object" then if (.data | type) == "object" then if (.data.sections | type) == "array" then (.data.sections | length) as $before | .data.sections |= map(select((try .data.bizType catch null) as $kind | if ($kind | type) == "string" and $kind != "" then $kind == "item" else true end)) | if (.data.sections | length) != $before and (.data.feedsCount | type) == "number" then .data.feedsCount = (.data.sections | length) else . end else . end else . end else . end`)
+response if ${clean_search} == true && ${url} ~= /^https:\/\/g-acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlemtopsearch\.search\// && ${response.status} == 200 then response.json.jq(`if type == "object" then if (.data | type) == "object" then if (.data.resultList | type) == "array" then .data.resultList |= map(select((try .data.item.main.clickParam.args.item_type catch null) as $kind | if ($kind | type) == "string" and $kind != "" then $kind == "goods" else true end)) else . end else . end else . end`)
+
+[Mitm]
+hostname = acs.m.taobao.com,g-acs.m.goofish.com,acs.m.goofish.com
