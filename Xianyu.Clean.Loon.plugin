@@ -1,12 +1,12 @@
 #!name = 闲鱼净化
-#!desc = 屏蔽已知开屏接口，精简首页与搜索非商品卡片。独立开关；接口变化可能失效，未做闲鱼实机验证。
+#!desc = 屏蔽已知开屏接口，精简首页、搜索及我的页面已知推广模块。独立开关；接口变化可能失效，未做闲鱼实机验证。
 #!author = Codex
 #!loon_version = 3.5.1(978)
 #!system = iOS,iPadOS
 #!tag = 去广告,应用净化
 #!type = normal
 
-# 版本：1.0.0；语法与接口资料核对：2026-09-09
+# 版本：1.1.0；语法与接口资料核对：2026-09-09
 # 新版 Rewrite：https://nsloon.app/docs/Rewrite/rewrite_v2/
 # 接口与字段参考：https://github.com/androidcn/userscripts/blob/main/goofish.plugin
 # https://github.com/androidcn/userscripts/blob/main/goofish.js
@@ -20,6 +20,9 @@ clean_home = switch,true,tag=首页仅保留商品类型,desc=删除有明确类
 clean_search = switch,true,tag=搜索仅保留商品类型,desc=删除有明确类型的非商品结果；不保证移除标为商品的推广
 hide_publish_float = switch,false,tag=隐藏发布浮层（实验）,desc=屏蔽已知策略接口；可能影响其他策略入口
 
+clean_profile = switch,true,tag=净化我的页面推广,desc=移除已知会员等级横幅及滚动提示和底部推广；新版模块可能不匹配
+hide_profile_tools = switch,true,tag=隐藏我的工具箱,desc=整块隐藏工具箱；包括借钱以及同组的小法庭和公约等入口
+
 [Rewrite]
 request if ${block_splash} == true && ${url} ~= /^https:\/\/acs\.m\.taobao\.com\/gw\/mtop\.taobao\.idle\.home\.welcome\// then reject_dict(200)
 request if ${hide_publish_float} == true && ${url} ~= /^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.user\.strategy\.get\// then reject_dict(200)
@@ -27,6 +30,12 @@ request if ${hide_publish_float} == true && ${url} ~= /^https:\/\/acs\.m\.goofis
 # 仅处理已知数组；字段缺失、类型异常的卡片原样保留。没有删除时不改计数。
 response if ${clean_home} == true && ${url} ~= /^https:\/\/g-acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlehome\.home\.nextfresh\// && ${response.status} == 200 then response.json.jq(`if type == "object" then if (.data | type) == "object" then if (.data.sections | type) == "array" then (.data.sections | length) as $before | .data.sections |= map(select((try .data.bizType catch null) as $kind | if ($kind | type) == "string" and $kind != "" then $kind == "item" else true end)) | if (.data.sections | length) != $before and (.data.feedsCount | type) == "number" then .data.feedsCount = (.data.sections | length) else . end else . end else . end else . end`)
 response if ${clean_search} == true && ${url} ~= /^https:\/\/g-acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlemtopsearch\.search\// && ${response.status} == 200 then response.json.jq(`if type == "object" then if (.data | type) == "object" then if (.data.resultList | type) == "array" then .data.resultList |= map(select((try .data.item.main.clickParam.args.item_type catch null) as $kind | if ($kind | type) == "string" and $kind != "" then $kind == "goods" else true end)) else . end else . end else . end`)
+
+# 我的页面字段参考（2024 年实现；非当前版本抓包）：
+# https://github.com/zmjde/loon/blob/main/Script/Goofish/Goofish.js
+response if ${clean_profile} == true && ${url} ~= /^https:\/\/(?:g-)?acs\.m\.goofish\.com\/gw\/mtop\.idle\.user\.page\.my\.adapter\// && ${response.status} == 200 then response.json.jq(`if type == "object" then if (.data | type) == "object" then if (.data.container | type) == "object" then if (.data.container.sections | type) == "array" then .data.container.sections |= map(select((try .template.name catch null) as $name | (["my_fy25_slider", "xianyu_home_fish_my_banner_card_2023", "my_fy25_community"] | index($name)) == null) | if (try .template.name catch null) == "my_fy25_user_info" then if (.item | type) == "object" then del(.item.level) else . end else . end) else . end else . end else . end else . end`)
+response if ${hide_profile_tools} == true && ${url} ~= /^https:\/\/(?:g-)?acs\.m\.goofish\.com\/gw\/mtop\.idle\.user\.page\.my\.adapter\// && ${response.status} == 200 then response.json.jq(`if type == "object" then if (.data | type) == "object" then if (.data.container | type) == "object" then if (.data.container.sections | type) == "array" then .data.container.sections |= map(select((try .template.name catch null) != "my_fy25_tools")) else . end else . end else . end else . end`)
+request if ${clean_profile} == true && ${url} ~= /^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.topic\.banner\// then reject_dict(200)
 
 [Mitm]
 hostname = acs.m.taobao.com,g-acs.m.goofish.com,acs.m.goofish.com
