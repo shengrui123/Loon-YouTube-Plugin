@@ -1,0 +1,25 @@
+#!name = 淘宝基础净化（导航待适配）
+#!desc = 屏蔽已知首页二楼活动和菜鸟广告请求。尚未实现底部视频及顶部频道精简；需当前版本响应样本。
+#!author = Codex
+#!loon_version = 3.5.1(978)
+#!system = iOS,iPadOS
+#!tag = 去广告,应用净化
+#!type = normal
+
+# 版本：0.1.0；2026-09-09
+# 语法：https://nsloon.app/docs/Rewrite/rewrite_v2/
+# 端点依据：https://github.com/zmjde/loon/blob/main/Plugin/Taobao.plugin
+# 尚无当前版本导航配置样本，不添加猜测的导航字段或全域递归过滤。
+
+[Argument]
+block_second_floor = switch,true,tag=屏蔽首页二楼活动,desc=阻止已知下拉二楼活动配置
+block_flyad = switch,true,tag=屏蔽已知菜鸟广告请求
+block_newface = switch,false,tag=屏蔽首页活动配置（实验）,desc=可能影响首页布局；默认关闭
+
+[Rewrite]
+request if ${block_second_floor} == true && ${url} ~= /^https:\/\/guide-acs\.m\.taobao\.com\/gw\/mtop\.taobao\.volvo\.secondfloor\.getconfig\// then reject_dict(200)
+request if ${block_flyad} == true && ${url} ~= /^https:\/\/guide-acs\.m\.taobao\.com\/gw\/mtop\.cainiao\.adx\.flyad\.getad\// then reject_dict(200)
+request if ${block_newface} == true && ${url} ~= /^https:\/\/guide-acs\.m\.taobao\.com\/gw\/mtop\.taobao\.wireless\.home\.newface\.awesome\.get\// then reject_dict(200)
+
+[Mitm]
+hostname = guide-acs.m.taobao.com
