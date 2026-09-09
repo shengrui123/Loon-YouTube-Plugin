@@ -1,0 +1,42 @@
+#!name = 彩云天气净化（墨鱼规则 Loon 适配）
+#!desc = 去除已知广告与推广，隐藏旧接口 AI 标签；保留旧版 SVIP 伪装逻辑（需登录且版本≤7.20.2），不保证新版 Pro 或服务端权益生效。
+#!author = ddgksf2013（原规则及脚本），Codex（Loon 格式适配）
+#!homepage = https://github.com/ddgksf2013/Rewrite
+#!loon_version = 3.5.1(983)
+#!system = iOS,iPadOS
+#!tag = 去广告,应用净化
+#!type = normal
+
+# 原规则：https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/CaiYunAds.conf
+# 转换日期：2026-09-09；原规则 V1.0.8 / 2024-09-27
+# 引用作者远程脚本，后续行为会随上游更新而变化。
+
+[Rewrite]
+request if ${url} ~= /^https?:\/\/ad\.cyapi\.cn\/v\d/ then reject(200)
+
+[Script]
+# > 伪装VIP解锁48小时降水[需登录][新验证接口][需旧版≤ 7.20.2]@ddgksf2013
+response if ${url} ~= /^https?:\/\/biz\.cyapi\.cn\/api\/v\d\/user_detail/ then script("https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/caiyun_json.js") with requires_body=true, timeout=10
+# > 伪装VIP解锁48小时降水[需登录][需旧版≤ 7.20.2]@ddgksf2013
+response if ${url} ~= /^https?:\/\/biz\.cyapi\.cn\/v\d\/user/ then script("https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/caiyun_json.js") with requires_body=true, timeout=10
+# > 图层推广@ddgksf2013
+response if ${url} ~= /^https?:\/\/wrapper\.cyapi\.cn\/v\d\/activity/ then script("https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/caiyun_json.js") with requires_body=true, timeout=10
+# > 活动推广@ddgksf2013
+response if ${url} ~= /^https?:\/\/api\.caiyunapp\.com\/v\d\/activity/ then script("https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/caiyun_json.js") with requires_body=true, timeout=10
+# > 首页顶部推广@ddgksf2013
+response if ${url} ~= /^https?:\/\/starplucker\.cyapi\.cn\/v\d\/operation\/homefeatures/ then script("https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/caiyun_json.js") with requires_body=true, timeout=10
+# > SVIP提醒推广@ddgksf2013
+response if ${url} ~= /^https?:\/\/starplucker\.cyapi\.cn\/v\d\/notification\/message_center/ then script("https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/caiyun_json.js") with requires_body=true, timeout=10
+# > 雨季特惠提醒@ddgksf2013
+response if ${url} ~= /^https?:\/\/starplucker\.cyapi\.cn\/v\d\/config\/cypage/ then script("https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/caiyun_json.js") with requires_body=true, timeout=10
+# > 发现页信息流推荐@ddgksf2013
+response if ${url} ~= /^https?:\/\/starplucker\.cyapi\.cn\/v\d\/operation\/feeds/ then script("https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/caiyun_json.js") with requires_body=true, timeout=10
+# > 发现页banners@ddgksf2013
+response if ${url} ~= /^https?:\/\/starplucker\.cyapi\.cn\/v\d\/operation\/banners/ then script("https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/caiyun_json.js") with requires_body=true, timeout=10
+# > 发现页中间部分@ddgksf2013
+response if ${url} ~= /^https?:\/\/starplucker\.cyapi\.cn\/v\d\/operation\/features/ then script("https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/caiyun_json.js") with requires_body=true, timeout=10
+# > 发现页活动@ddgksf2013
+response if ${url} ~= /^https?:\/\/starplucker\.cyapi\.cn\/v\d\/campaigns/ then script("https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/caiyun_json.js") with requires_body=true, timeout=10
+
+[Mitm]
+hostname = wrapper.cyapi.cn,api.caiyunapp.com,starplucker.cyapi.cn,ad.cyapi.cn,biz.cyapi.cn
