@@ -14,6 +14,10 @@
 [Rewrite]
 request if ${url} ~= /^https?:\/\/ad\.cyapi\.cn\/v\d/ then reject(200)
 
+# 补充 Stash 规则中的独立 vip_info 接口；仅修改已存在的会员对象。
+# 接口参考：https://clashios.app/static/stoverride/chxm1023_rewrite/caiyun.stoverride
+response if ${url} ~= /^https?:\/\/biz\.(?:cyapi\.cn|caiyunapp\.com)\/p\/v\d+\/vip_info(?:\?|$)/ && ${response.status} == 200 then response.json.jq(`if type == "object" then (if (.vip | type) == "object" then .vip.expires_time = "4092599349" else . end) | (if (.svip | type) == "object" then .svip.expires_time = "4092599349" else . end) else . end`)
+
 [Script]
 # > 伪装VIP解锁48小时降水[需登录][新验证接口][需旧版≤ 7.20.2]@ddgksf2013
 response if ${url} ~= /^https?:\/\/biz\.cyapi\.cn\/api\/v\d\/user_detail/ then script("https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/caiyun_json.js") with requires_body=true, timeout=10
@@ -39,4 +43,4 @@ response if ${url} ~= /^https?:\/\/starplucker\.cyapi\.cn\/v\d\/operation\/featu
 response if ${url} ~= /^https?:\/\/starplucker\.cyapi\.cn\/v\d\/campaigns/ then script("https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/caiyun_json.js") with requires_body=true, timeout=10
 
 [Mitm]
-hostname = wrapper.cyapi.cn,api.caiyunapp.com,starplucker.cyapi.cn,ad.cyapi.cn,biz.cyapi.cn
+hostname = wrapper.cyapi.cn,api.caiyunapp.com,starplucker.cyapi.cn,ad.cyapi.cn,biz.cyapi.cn,biz.caiyunapp.com

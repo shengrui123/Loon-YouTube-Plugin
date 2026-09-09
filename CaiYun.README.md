@@ -25,3 +25,9 @@
 - Loon 语法：https://nsloon.app/docs/Script/script_v2/
 
 原作者：ddgksf2013。插件直接引用上游远程脚本，后续更新会改变运行逻辑。
+
+## Stash 规则补充（2026-09-09）
+
+参考用户提供的 https://clashios.app/static/stoverride/chxm1023_rewrite/caiyun.stoverride ，增加 `biz.cyapi.cn` / `biz.caiyunapp.com` 的 `/p/v数字/vip_info` 响应处理，仅调整响应中已存在的 VIP / SVIP 对象的到期字段。该逻辑在插件内使用 JQ 实现，不引入第二份远程脚本。
+
+该 Stash 引用的 chxm1023 脚本标注支持 7.11.0（2024-02-07），并非新版 Pro 兼容证明。未采用其增加 AI 配额、插入频道入口、修改注册天数或硬编码设备令牌的行为。地图和 48 小时预报的请求认证未改动，不能承诺解锁。此补充仍需实机验证。
