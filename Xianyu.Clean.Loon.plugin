@@ -6,7 +6,7 @@
 #!tag = 去广告,应用净化
 #!type = normal
 
-# 版本：1.2.0；语法与接口资料核对：2026-09-11
+# 版本：1.3.0；语法与接口资料核对：2026-09-11
 # 新版 Rewrite：https://nsloon.app/docs/Rewrite/rewrite_v2/
 # 接口与字段参考：https://github.com/androidcn/userscripts/blob/main/goofish.plugin
 # https://github.com/androidcn/userscripts/blob/main/goofish.js
@@ -27,13 +27,17 @@ clean_profile_business = switch,true,tag=按业务类型精简我的页面,desc=
 clean_profile_feed = switch,true,tag=移除我的推荐信息流
 block_shared_splash = switch,true,tag=拦截优酷共用开屏接口,desc=仅拦截 iyes.youku.com 的 uts/v1/start 路径；可能影响其他 App 同路径开屏
 
+clean_search_words = switch,true,tag=清除搜索栏填充词
+hide_home_float = switch,true,tag=隐藏首页策略悬浮入口,desc=清空 strategy.list 的策略数组；同接口其他策略入口也可能隐藏
+clean_item_ads = switch,true,tag=过滤商品详情推荐广告,desc=仅过滤 cardData.bizType 为 mamaAD 的推荐卡片
+
 [Rewrite]
 request if ${block_splash} == true && ${url} ~= /^https:\/\/acs\.m\.taobao\.com\/gw\/mtop\.taobao\.idle\.home\.welcome\// then reject_dict(200)
 request if ${hide_publish_float} == true && ${url} ~= /^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.user\.strategy\.get\// then reject_dict(200)
 
 # 仅处理已知数组；字段缺失、类型异常的卡片原样保留。没有删除时不改计数。
-response if ${clean_home} == true && ${url} ~= /^https:\/\/g-acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlehome\.home\.nextfresh\// && ${response.status} == 200 then response.json.jq(`if type == "object" then if (.data | type) == "object" then if (.data.sections | type) == "array" then (.data.sections | length) as $before | .data.sections |= map(select((try .data.bizType catch null) as $kind | if ($kind | type) == "string" and $kind != "" then $kind == "item" else true end)) | if (.data.sections | length) != $before and (.data.feedsCount | type) == "number" then .data.feedsCount = (.data.sections | length) else . end else . end else . end else . end`)
-response if ${clean_search} == true && ${url} ~= /^https:\/\/g-acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlemtopsearch\.search\// && ${response.status} == 200 then response.json.jq(`if type == "object" then if (.data | type) == "object" then if (.data.resultList | type) == "array" then .data.resultList |= map(select((try .data.item.main.clickParam.args.item_type catch null) as $kind | if ($kind | type) == "string" and $kind != "" then $kind == "goods" else true end)) else . end else . end else . end`)
+response if ${clean_home} == true && ${url} ~= /^https:\/\/(?:g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlehome\.home\.nextfresh\// && ${response.status} == 200 then response.json.jq(`if type == "object" then if (.data | type) == "object" then if (.data.sections | type) == "array" then (.data.sections | length) as $before | .data.sections |= map(select((try .data.bizType catch null) as $kind | if ($kind | type) == "string" and $kind != "" then $kind == "item" else true end)) | if (.data.sections | length) != $before and (.data.feedsCount | type) == "number" then .data.feedsCount = (.data.sections | length) else . end else . end else . end else . end`)
+response if ${clean_search} == true && ${url} ~= /^https:\/\/(?:g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlemtopsearch\.search\// && ${response.status} == 200 then response.json.jq(`if type == "object" then if (.data | type) == "object" then if (.data.resultList | type) == "array" then .data.resultList |= map(select((try .data.item.main.clickParam.args.item_type catch null) as $kind | if ($kind | type) == "string" and $kind != "" then $kind == "goods" else true end)) else . end else . end else . end`)
 
 # 我的页面字段参考（2024 年实现；非当前版本抓包）：
 # https://github.com/zmjde/loon/blob/main/Script/Goofish/Goofish.js
@@ -46,6 +50,11 @@ request if ${block_splash} == true && ${url} ~= /^https?:\/\/(?:g-)?acs\.m\.goof
 request if ${block_shared_splash} == true && ${url} ~= /^https?:\/\/iyes\.youku\.com\/uts\/v1\/start\// then reject_dict(200)
 response if ${clean_profile_business} == true && ${url} ~= /^https?:\/\/(?:g-)?acs\.m\.goofish\.com\/gw\/mtop\.idle\.user\.page\.my\.adapter\// && ${response.status} == 200 then response.json.jq(`if type == "object" then if (.data | type) == "object" then if (.data.container | type) == "object" then if (.data.container.sections | type) == "array" then .data.container.sections |= map(select((try .sectionBizCode catch null) as $code | if ($code | type) == "string" and $code != "" then ($code | test("head|user|trade")) else true end)) | if (.data.ability | type) == "array" then .data.ability = [] else . end else . end else . end else . end else . end`)
 response if ${clean_profile_feed} == true && ${url} ~= /^https?:\/\/(?:g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.item\.buy\.feeds\// && ${response.status} == 200 then response.json.jq(`if type == "object" then if (.data | type) == "object" then if (.data.sections | type) == "array" then .data.sections = [] else . end else . end else . end`)
+
+# 搜索填充词、首页悬浮入口和商品推荐广告：ddgksf2013/Rewrite/AdBlock/GoofishAds.conf
+response if ${clean_search_words} == true && ${url} ~= /^https?:\/\/(?:g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlemtopsearch\.search\.shade\// && ${response.status} == 200 then response.json.jq(`if type == "object" then if (.data | type) == "object" then if (.data.singleShadeWords | type) == "array" then .data.singleShadeWords = [] else . end else . end else . end`)
+response if ${hide_home_float} == true && ${url} ~= /^https?:\/\/(?:g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.user\.strategy\.list\// && ${response.status} == 200 then response.json.jq(`if type == "object" then if (.data | type) == "object" then if (.data.strategies | type) == "array" then .data.strategies = [] else . end else . end else . end`)
+response if ${clean_item_ads} == true && ${url} ~= /^https?:\/\/(?:g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.item\.recommend\// && ${response.status} == 200 then response.json.jq(`if type == "object" then if (.data | type) == "object" then if (.data.cardList | type) == "array" then .data.cardList |= map(select((try .cardData.bizType catch null) != "mamaAD")) else . end else . end else . end`)
 
 [Mitm]
 hostname = acs.m.taobao.com,g-acs.m.goofish.com,acs.m.goofish.com,iyes.youku.com

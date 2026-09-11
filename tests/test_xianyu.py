@@ -35,7 +35,7 @@ class XianyuTests(unittest.TestCase):
 
     def test_unknown_structures(self):
         for value in [None, [], 3, 'text', {}, {'data': None}, {'data': []}, {'data': {'sections': {}, 'resultList': 'text'}}, {'data': {'sections': [None, {}, 2], 'feedsCount': 100}}]:
-            for index in range(6):
+            for index in range(9):
                 if index == 5 and isinstance(value, dict) and isinstance(value.get("data"), dict) and isinstance(value["data"].get("sections"), list):
                     continue  # Known feed array is intentionally emptied.
                 self.assertEqual(run(index, value), value)
@@ -84,9 +84,22 @@ class XianyuTests(unittest.TestCase):
         self.assertFalse(PATTERNS[7].search('https://acs.m.goofish.com/gw/mtop.idle.splash.ads.extra/1.0/'))
         self.assertFalse(PATTERNS[8].search('https://iyes.youku.com/video/'))
 
+    def test_expanded_cleanup(self):
+        self.assertEqual(run(6, {'data': {'singleShadeWords': ['ad'], 'query': 'keep'}}), {'data': {'singleShadeWords': [], 'query': 'keep'}})
+        self.assertEqual(run(7, {'data': {'strategies': [1], 'other': 1}}), {'data': {'strategies': [], 'other': 1}})
+        cards = [{'cardData': {'bizType': 'mamaAD'}}, {'cardData': {'bizType': 'item'}}, {}, None, 42]
+        self.assertEqual(run(8, {'data': {'cardList': cards}}), {'data': {'cardList': cards[1:]}})
+        apis = ['mtop.taobao.idlemtopsearch.search.shade', 'mtop.taobao.idle.user.strategy.list', 'mtop.taobao.idle.item.recommend']
+        for pattern, api in zip(PATTERNS[11:], apis):
+            for host in ['acs.m.goofish.com', 'g-acs.m.goofish.com']:
+                url = 'https://' + host + '/gw/' + api + '/1.0/'
+                self.assertTrue(pattern.search(url))
+                self.assertFalse(pattern.search(url.replace(api+'/', api+'.other/')))
+                self.assertFalse(pattern.search(url.replace('.com/', '.com.evil/')))
+
     def test_url_boundaries(self):
         urls = ['https://acs.m.taobao.com/gw/mtop.taobao.idle.home.welcome/1.0/?x=1', 'https://acs.m.goofish.com/gw/mtop.taobao.idle.user.strategy.get/1.0/', 'https://g-acs.m.goofish.com/gw/mtop.taobao.idlehome.home.nextfresh/1.0/', 'https://g-acs.m.goofish.com/gw/mtop.taobao.idlemtopsearch.search/1.0/']
-        self.assertEqual(len(PATTERNS), 11)
+        self.assertEqual(len(PATTERNS), 14)
         for index, url in enumerate(urls):
             self.assertEqual([bool(p.search(url)) for p in PATTERNS[:4]], [i == index for i in range(4)])
             for bad in [url.replace('/1.0/', 'extra/1.0/'), url.replace('.com/', '.com.evil/'), url.replace('/gw/', '/h5/'), url.replace('https:', 'http:')]:
