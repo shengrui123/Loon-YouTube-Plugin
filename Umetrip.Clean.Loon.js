@@ -26,23 +26,35 @@ function removeUIItem(labels, mine, nav, advert) {
 }
 function cleanExtraJson(root, mine) {
   let changed = false;
+  // 只回收本次净化造成的空容器；保留原本为空的正常占位。
   function walk(value, depth) {
-    if (!value || typeof value !== 'object' || depth > 24) return;
+    if (!value || typeof value !== 'object' || depth > 24) return false;
     if (Array.isArray(value)) {
+      const before = value.length;
       const nav = navigationList(value.map(itemLabels));
       for (let i = value.length - 1; i >= 0; i--) {
         const item = value[i];
         const advert = item && ['ADVERT', 'ADVERTISEMENT'].includes(item.cardType);
-        if (removeUIItem(itemLabels(item), mine, nav, advert)) {
+        const matched = removeUIItem(itemLabels(item), mine, nav, advert);
+        const emptied = !matched && walk(item, depth + 1);
+        if (matched || (mine && emptied)) {
           value.splice(i, 1);
           changed = true;
-        } else walk(item, depth + 1);
+        }
       }
-      return;
+      return before > 0 && value.length === 0;
     }
-    for (const key of Object.keys(value)) walk(value[key], depth + 1);
-    // 沿用上游的 cardId → 下标约定，避免删除 children 后索引失效。
+    let emptiedLayout = false;
+    for (const key of Object.keys(value)) {
+      const emptied = walk(value[key], depth + 1);
+      if (['children', 'medias'].includes(key) && emptied) emptiedLayout = true;
+    }
     if (changed) refreshChildrenIndex(value);
+    // 带其他可见内容的混合卡片保留；纯布局属性（背景、圆角、箭头）不保留空壳。
+    const hasItems = ['children', 'medias'].some(key => Array.isArray(value[key]) && value[key].length);
+    const hasContent = [...LABEL_KEYS, 'image', 'imageUrl', 'icon', 'iconUrl', 'content', 'subTitle', 'subCaption']
+      .some(key => typeof value[key] === 'string' && value[key].trim());
+    return mine && emptiedLayout && !hasItems && !hasContent;
   }
   walk(root, 0);
   return changed;
@@ -80,9 +92,11 @@ function cleanExtraProto(bytes, mine, depth = 0) {
     if (field.wire === 2) {
       const result = cleanExtraProto(field.data, mine, depth + 1);
       if (result.count) {
+        count += result.count;
+        // 递归净化后完全为空的消息不再写回父级，避免保留空消息外壳。
+        if (mine && result.bytes.length === 0) continue;
         field.data = result.bytes;
         field.dirty = true;
-        count += result.count;
       }
     }
     kept.push(field);

@@ -12,7 +12,7 @@
 # 不可直接引用原版 QX 脚本：其 bodyBytes 返回格式不适用于 Loon。
 
 [Script]
-response if ${url} ~= /^https:\/\/(?:sns|appmsg|umehome|opactivity|activity|umerp|umeflightstatus|umestartup)\.umetrip\.com\/gateway\/api\/umetrip\/native(?:\?|$)/ && ${response.status} == 200 then script("https://raw.githubusercontent.com/shengrui123/Loon-YouTube-Plugin/main/Umetrip.Clean.Loon.js?v=20260911-2") with requires_body=true, binary_body_mode=true, timeout=10, tag="航旅纵横二进制净化"
+response if ${url} ~= /^https:\/\/(?:sns|appmsg|umehome|opactivity|activity|umerp|umeflightstatus|umestartup)\.umetrip\.com\/gateway\/api\/umetrip\/native(?:\?|$)/ && ${response.status} == 200 then script("https://raw.githubusercontent.com/shengrui123/Loon-YouTube-Plugin/main/Umetrip.Clean.Loon.js?v=20260911-3") with requires_body=true, binary_body_mode=true, timeout=10, tag="航旅纵横二进制净化"
 
 [Mitm]
 hostname = sns.umetrip.com,appmsg.umetrip.com,umehome.umetrip.com,opactivity.umetrip.com,activity.umetrip.com,umerp.umetrip.com,umeflightstatus.umetrip.com,umestartup.umetrip.com
