@@ -7,12 +7,15 @@
 #!tag = 去广告,应用净化
 #!type = normal
 
+# 发布版本：2026.09.11.4
+# 更新：修正“我的”页面净化后空容器残留；保留正常卡片。新增过滤尚待完整手机实测。
+# 更新通知：https://t.me/Atlas_Corner
 # 上游规则 V1.0.1 / 2026-08-29；适配日期 2026-09-11。
 # 配套脚本通过本仓库 GitHub Raw 地址加载。
 # 不可直接引用原版 QX 脚本：其 bodyBytes 返回格式不适用于 Loon。
 
 [Script]
-response if ${url} ~= /^https:\/\/(?:sns|appmsg|umehome|opactivity|activity|umerp|umeflightstatus|umestartup)\.umetrip\.com\/gateway\/api\/umetrip\/native(?:\?|$)/ && ${response.status} == 200 then script("https://raw.githubusercontent.com/shengrui123/Loon-YouTube-Plugin/main/Umetrip.Clean.Loon.js?v=20260911-3") with requires_body=true, binary_body_mode=true, timeout=10, tag="航旅纵横二进制净化"
+response if ${url} ~= /^https:\/\/(?:sns|appmsg|umehome|opactivity|activity|umerp|umeflightstatus|umestartup)\.umetrip\.com\/gateway\/api\/umetrip\/native(?:\?|$)/ && ${response.status} == 200 then script("https://raw.githubusercontent.com/shengrui123/Loon-YouTube-Plugin/main/Umetrip.Clean.Loon.js?v=20260911-4") with requires_body=true, binary_body_mode=true, timeout=10, tag="航旅纵横二进制净化"
 
 [Mitm]
 hostname = sns.umetrip.com,appmsg.umetrip.com,umehome.umetrip.com,opactivity.umetrip.com,activity.umetrip.com,umerp.umetrip.com,umeflightstatus.umetrip.com,umestartup.umetrip.com
