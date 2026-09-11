@@ -6,7 +6,7 @@
 #!tag = 去广告,应用净化
 #!type = normal
 
-# 版本：1.1.0；语法与接口资料核对：2026-09-09
+# 版本：1.2.0；语法与接口资料核对：2026-09-11
 # 新版 Rewrite：https://nsloon.app/docs/Rewrite/rewrite_v2/
 # 接口与字段参考：https://github.com/androidcn/userscripts/blob/main/goofish.plugin
 # https://github.com/androidcn/userscripts/blob/main/goofish.js
@@ -15,13 +15,17 @@
 # 单文件，无外部脚本。需开启复写与 MitM，并安装、信任证书。
 
 [Argument]
-block_splash = switch,true,tag=屏蔽已知开屏请求,desc=仅覆盖淘宝域名下的已知闲鱼开屏接口
+block_splash = switch,true,tag=屏蔽已知开屏请求,desc=覆盖旧开屏与闲鱼 splash.ads 接口
 clean_home = switch,true,tag=首页仅保留商品类型,desc=删除有明确类型的非商品卡片；也可能移除活动和推荐入口
 clean_search = switch,true,tag=搜索仅保留商品类型,desc=删除有明确类型的非商品结果；不保证移除标为商品的推广
 hide_publish_float = switch,false,tag=隐藏发布浮层（实验）,desc=屏蔽已知策略接口；可能影响其他策略入口
 
 clean_profile = switch,true,tag=净化我的页面推广,desc=移除已知会员等级横幅及滚动提示和底部推广；新版模块可能不匹配
 hide_profile_tools = switch,true,tag=隐藏我的工具箱,desc=整块隐藏工具箱；包括借钱以及同组的小法庭和公约等入口
+
+clean_profile_business = switch,true,tag=按业务类型精简我的页面,desc=仅保留含 head/user/trade 的已识别业务模块；隐藏其他业务入口
+clean_profile_feed = switch,true,tag=移除我的推荐信息流
+block_shared_splash = switch,true,tag=拦截优酷共用开屏接口,desc=仅拦截 iyes.youku.com 的 uts/v1/start 路径；可能影响其他 App 同路径开屏
 
 [Rewrite]
 request if ${block_splash} == true && ${url} ~= /^https:\/\/acs\.m\.taobao\.com\/gw\/mtop\.taobao\.idle\.home\.welcome\// then reject_dict(200)
@@ -37,5 +41,11 @@ response if ${clean_profile} == true && ${url} ~= /^https:\/\/(?:g-)?acs\.m\.goo
 response if ${hide_profile_tools} == true && ${url} ~= /^https:\/\/(?:g-)?acs\.m\.goofish\.com\/gw\/mtop\.idle\.user\.page\.my\.adapter\// && ${response.status} == 200 then response.json.jq(`if type == "object" then if (.data | type) == "object" then if (.data.container | type) == "object" then if (.data.container.sections | type) == "array" then .data.container.sections |= map(select((try .template.name catch null) != "my_fy25_tools")) else . end else . end else . end else . end`)
 request if ${clean_profile} == true && ${url} ~= /^https:\/\/acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.topic\.banner\// then reject_dict(200)
 
+# 补充来源：ddgksf2013/Rewrite/AdBlock/GoofishAds.conf（2025-09-06 / V1.0.11）
+request if ${block_splash} == true && ${url} ~= /^https?:\/\/(?:g-)?acs\.m\.goofish\.com\/gw\/mtop\.[^\/?]*splash\.ads\// then reject(200)
+request if ${block_shared_splash} == true && ${url} ~= /^https?:\/\/iyes\.youku\.com\/uts\/v1\/start\// then reject_dict(200)
+response if ${clean_profile_business} == true && ${url} ~= /^https?:\/\/(?:g-)?acs\.m\.goofish\.com\/gw\/mtop\.idle\.user\.page\.my\.adapter\// && ${response.status} == 200 then response.json.jq(`if type == "object" then if (.data | type) == "object" then if (.data.container | type) == "object" then if (.data.container.sections | type) == "array" then .data.container.sections |= map(select((try .sectionBizCode catch null) as $code | if ($code | type) == "string" and $code != "" then ($code | test("head|user|trade")) else true end)) | if (.data.ability | type) == "array" then .data.ability = [] else . end else . end else . end else . end else . end`)
+response if ${clean_profile_feed} == true && ${url} ~= /^https?:\/\/(?:g-)?acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idle\.item\.buy\.feeds\// && ${response.status} == 200 then response.json.jq(`if type == "object" then if (.data | type) == "object" then if (.data.sections | type) == "array" then .data.sections = [] else . end else . end else . end`)
+
 [Mitm]
-hostname = acs.m.taobao.com,g-acs.m.goofish.com,acs.m.goofish.com
+hostname = acs.m.taobao.com,g-acs.m.goofish.com,acs.m.goofish.com,iyes.youku.com

@@ -35,7 +35,9 @@ class XianyuTests(unittest.TestCase):
 
     def test_unknown_structures(self):
         for value in [None, [], 3, 'text', {}, {'data': None}, {'data': []}, {'data': {'sections': {}, 'resultList': 'text'}}, {'data': {'sections': [None, {}, 2], 'feedsCount': 100}}]:
-            for index in range(4):
+            for index in range(6):
+                if index == 5 and isinstance(value, dict) and isinstance(value.get("data"), dict) and isinstance(value["data"].get("sections"), list):
+                    continue  # Known feed array is intentionally emptied.
                 self.assertEqual(run(index, value), value)
 
     def test_profile(self):
@@ -65,9 +67,26 @@ class XianyuTests(unittest.TestCase):
                 self.assertFalse(pattern.search(url.replace('adapter/', 'adapter.extra/')))
                 self.assertFalse(pattern.search(url.replace(host, host + '.evil')))
 
+    def test_profile_business_and_feed(self):
+        cards = [{'sectionBizCode': name} for name in ['head', 'user_info', 'trade', 'marketing', 'recycle', '']]+[{}, None, 3]
+        value = {'data': {'ability': [1], 'container': {'sections': cards}, 'other': 'keep'}}
+        result = run(4, value)
+        self.assertEqual(result['data']['container']['sections'], cards[:3]+cards[5:])
+        self.assertEqual(result['data']['ability'], [])
+        self.assertEqual(result['data']['other'], 'keep')
+        self.assertEqual(run(5, {'data': {'sections': [1], 'cursor': 'keep'}}), {'data': {'sections': [], 'cursor': 'keep'}})
+
+    def test_new_endpoints(self):
+        urls = ['https://acs.m.goofish.com/gw/mtop.idle.splash.ads/1.0/', 'https://iyes.youku.com/uts/v1/start/?x=1', 'https://g-acs.m.goofish.com/gw/mtop.idle.user.page.my.adapter/1.0/', 'https://acs.m.goofish.com/gw/mtop.taobao.idle.item.buy.feeds/1.0/']
+        for pattern, url in zip(PATTERNS[7:], urls):
+            self.assertTrue(pattern.search(url))
+            self.assertFalse(pattern.search(url.replace('.com/', '.com.evil/')))
+        self.assertFalse(PATTERNS[7].search('https://acs.m.goofish.com/gw/mtop.idle.splash.ads.extra/1.0/'))
+        self.assertFalse(PATTERNS[8].search('https://iyes.youku.com/video/'))
+
     def test_url_boundaries(self):
         urls = ['https://acs.m.taobao.com/gw/mtop.taobao.idle.home.welcome/1.0/?x=1', 'https://acs.m.goofish.com/gw/mtop.taobao.idle.user.strategy.get/1.0/', 'https://g-acs.m.goofish.com/gw/mtop.taobao.idlehome.home.nextfresh/1.0/', 'https://g-acs.m.goofish.com/gw/mtop.taobao.idlemtopsearch.search/1.0/']
-        self.assertEqual(len(PATTERNS), 7)
+        self.assertEqual(len(PATTERNS), 11)
         for index, url in enumerate(urls):
             self.assertEqual([bool(p.search(url)) for p in PATTERNS[:4]], [i == index for i in range(4)])
             for bad in [url.replace('/1.0/', 'extra/1.0/'), url.replace('.com/', '.com.evil/'), url.replace('/gw/', '/h5/'), url.replace('https:', 'http:')]:
