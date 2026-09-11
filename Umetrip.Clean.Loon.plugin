@@ -1,5 +1,5 @@
 #!name = 航旅纵横去广告与净化
-#!desc = 清理开屏及已知推广；增加榜单、我的推广入口和经验底栏过滤（需接口下发对应配置）。自动加载配套远程脚本；使用二进制响应处理。
+#!desc = 清理开屏及已知推广，净化首页、瀑布流、行程和我的页面。自动加载配套远程脚本；使用二进制响应处理。
 #!author = ddgksf2013（原规则及算法），Codex（Loon 适配）
 #!homepage = https://ddgksf2013.top/rewrite/UmetripAds.conf
 #!loon_version = 3.5.1(983)
@@ -12,7 +12,7 @@
 # 不可直接引用原版 QX 脚本：其 bodyBytes 返回格式不适用于 Loon。
 
 [Script]
-response if ${url} ~= /^https:\/\/(?:sns|appmsg|umehome|opactivity|activity|umerp|umeflightstatus|umestartup)\.umetrip\.com\/gateway\/api\/umetrip\/native(?:\?|$)/ && ${response.status} == 200 then script("https://raw.githubusercontent.com/shengrui123/Loon-YouTube-Plugin/main/Umetrip.Clean.Loon.js?v=20260911-2") with requires_body=true, binary_body_mode=true, timeout=10, tag="航旅纵横二进制净化"
+response if ${url} ~= /^https:\/\/(?:sns|appmsg|umehome|opactivity|activity|umerp|umeflightstatus|umestartup)\.umetrip\.com\/gateway\/api\/umetrip\/native(?:\?|$)/ && ${response.status} == 200 then script("https://raw.githubusercontent.com/shengrui123/Loon-YouTube-Plugin/main/Umetrip.Clean.Loon.js") with requires_body=true, binary_body_mode=true, timeout=10, tag="航旅纵横二进制净化"
 
 [Mitm]
 hostname = sns.umetrip.com,appmsg.umetrip.com,umehome.umetrip.com,opactivity.umetrip.com,activity.umetrip.com,umerp.umetrip.com,umeflightstatus.umetrip.com,umestartup.umetrip.com
