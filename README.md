@@ -2,7 +2,7 @@
 
 ## 抖音
 
-- [抖音去广告与 TikTok 风格净化](./Douyin.README.md)：去开屏、过滤信息流广告，首页默认仅保留关注与推荐。
+- [抖音去开屏广告](./Douyin.README.md)：仅拦截开屏广告，不修改页面和信息流。
 
 ## YouTube 与 YouTube Music
 
