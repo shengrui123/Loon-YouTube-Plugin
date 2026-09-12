@@ -1,6 +1,6 @@
 # 抖音去开屏广告
 
-插件文件：[Douyin.Clean.Loon.plugin](./Douyin.Clean.Loon.plugin)
+插件文件：[Douyin.Splash.Loon.plugin](./Douyin.Splash.Loon.plugin)
 
 ## 功能
 
@@ -14,10 +14,10 @@
 在 Loon 的“配置 → 插件”中添加：
 
 ```text
-https://raw.githubusercontent.com/shengrui123/Loon-YouTube-Plugin/main/Douyin.Clean.Loon.plugin
+https://raw.githubusercontent.com/shengrui123/Loon-YouTube-Plugin/main/Douyin.Splash.Loon.plugin
 ```
 
-安装并信任 MitM 证书，开启“复写”和“MitM”。更新后完全退出抖音、清除抖音缓存，再冷启动；已经下载到本地的开屏素材不会因更新插件自动消失。
+先删除旧的“抖音去广告与 TikTok 风格净化”插件，再使用上面的新地址添加。安装并信任 MitM 证书，开启“复写”和“MitM”。随后完全退出抖音、清除抖音缓存，再冷启动；已经下载到本地的开屏素材不会因安装插件自动消失。
 
 ## 兼容性
 

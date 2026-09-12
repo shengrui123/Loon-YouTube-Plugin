@@ -2,7 +2,7 @@ import unittest
 from pathlib import Path
 
 
-PLUGIN = Path(__file__).resolve().parents[1] / "Douyin.Clean.Loon.plugin"
+PLUGIN = Path(__file__).resolve().parents[1] / "Douyin.Splash.Loon.plugin"
 TEXT = PLUGIN.read_text()
 ACTIVE = [line.strip() for line in TEXT.splitlines() if line.strip() and not line.startswith("#")]
 
