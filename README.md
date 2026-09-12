@@ -1,9 +1,5 @@
 # Loon 应用净化插件
 
-## 抖音
-
-- [抖音去开屏广告](./Douyin.README.md)：仅拦截开屏广告，不修改页面和信息流。
-
 ## YouTube 与 YouTube Music
 
 插件文件：[YouTube.Enhance.Loon.plugin](./YouTube.Enhance.Loon.plugin)
