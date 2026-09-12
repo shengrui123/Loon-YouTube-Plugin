@@ -1,0 +1,40 @@
+#!name = 抖音去广告与 TikTok 风格净化
+#!desc = 拦截开屏与广告下发，过滤信息流广告；首页默认仅保留关注/推荐频道，并清理侧栏运营入口和动态底栏皮肤。
+#!author = Codex
+#!homepage = https://github.com/shengrui123/Loon-YouTube-Plugin
+#!icon = https://raw.githubusercontent.com/Orz-3/mini/master/Color/TikTok.png
+#!loon_version = 3.5.1(983)
+#!system = iOS,iPadOS
+#!tag = 去广告,应用净化,抖音
+#!type = normal
+
+# 发布版本：1.0.0；2026-09-12
+# 采用 Loon Script V2 / Rewrite V2 语法。
+# 默认界面：顶部仅保留“关注、推荐”，关闭运营皮肤，清理侧栏常用小程序和常访问的人。
+# 网络规则无法移除客户端写死的所有控件；抖音接口改版后可能需要更新匹配范围。
+
+[Argument]
+feed_ads = switch,true,tag=过滤信息流广告,desc=仅删除带明确广告标识的推荐、关注、搜索等列表项
+minimal_tabs = switch,true,tag=精简顶部频道,desc=仅保留关注和推荐，接近 TikTok 首页
+keep_live = switch,false,tag=保留直播频道,desc=精简顶部频道时额外保留直播
+clean_sidebar = switch,true,tag=净化侧栏,desc=移除常用小程序、常访问的人及首页常用功能模块
+clean_tabbar = switch,true,tag=净化底栏样式,desc=关闭服务端动态皮肤并恢复客户端基础底栏
+
+[Rule]
+# 2026 年社区规则中用于开屏素材的直连 IP/6443；仅拦截指定目的端口。
+AND,((IP-CIDR,101.126.58.201/32,no-resolve),(DEST-PORT,6443)),REJECT
+AND,((IP-CIDR,110.249.199.75/32,no-resolve),(DEST-PORT,6443)),REJECT
+AND,((IP-CIDR,111.225.147.191/32,no-resolve),(DEST-PORT,6443)),REJECT
+AND,((IP-CIDR,111.63.61.101/32,no-resolve),(DEST-PORT,6443)),REJECT
+AND,((IP-CIDR,220.243.141.0/32,no-resolve),(DEST-PORT,6443)),REJECT
+
+[Rewrite]
+# 开屏及广告配置下发。路径级拦截，不屏蔽整个抖音 API 域名。
+request if ${url} ~= /^https:\/\/(?:aweme\.snssdk\.com|api\d*(?:-[a-z0-9]+)*\.amemv\.com)\/(?:api\/ad|aweme\/v\d+\/splash)\//i then reject_dict(200)
+request if ${url} ~= /^https:\/\/zlink\.ugsdk\.cn\/ad\//i then reject_dict(200)
+
+[Script]
+response if ${url} ~= /^https:\/\/(?:aweme\.snssdk\.com|api\d*(?:-[a-z0-9]+)*\.amemv\.com)\/(?:aweme\/(?:v\d+\/(?:feed|follow\/feed|nearby\/feed|search\/item|general\/search\/single)|homepage\/(?:render|sidebar_data))|tfe\/api\/request_combine\/v1)\//i && ${response.status} == 200 then script("https://raw.githubusercontent.com/shengrui123/Loon-YouTube-Plugin/main/Douyin.Clean.Loon.js?v=20260912-1", {${feed_ads}, ${minimal_tabs}, ${keep_live}, ${clean_sidebar}, ${clean_tabbar}}) with requires_body=true, timeout=10, tag="抖音广告与页面净化"
+
+[Mitm]
+hostname = aweme.snssdk.com,*.amemv.com,zlink.ugsdk.cn

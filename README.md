@@ -1,4 +1,10 @@
-# YouTube & YouTube Music Loon 插件
+# Loon 应用净化插件
+
+## 抖音
+
+- [抖音去广告与 TikTok 风格净化](./Douyin.README.md)：去开屏、过滤信息流广告，首页默认仅保留关注与推荐。
+
+## YouTube 与 YouTube Music
 
 插件文件：[YouTube.Enhance.Loon.plugin](./YouTube.Enhance.Loon.plugin)
 
