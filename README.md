@@ -43,3 +43,7 @@
 - [Loon 官方文档](https://nsloon.app/docs/Plugin/)：插件、Rewrite 与 Script 语法。
 
 本仓库只包含 Loon 配置，不复制上游脚本。上游代码分别受其各自许可证约束。
+
+## Egern Apple Push 規則集
+
+Apple Push Notification service（APNs）的網域及 IPv4／IPv6 分流規則，包含精簡和廣泛涵蓋兩個版本。使用方式與限制請參閱 [Apple Push 規則集說明](./Egern/Apple-Push.README.md)。

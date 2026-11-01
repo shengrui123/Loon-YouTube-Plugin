@@ -1,0 +1,13 @@
+# Apple Push Notification service (APNs), 廣泛涵蓋版本
+# Apple 建議允許整個 17.0.0.0/8；IPv6 為 Apple 公布的 APNs 範圍。
+# 注意：17.0.0.0/8 包含大量其他 Apple 服務，並非 APNs 專用。
+# https://support.apple.com/en-us/102266
+domain_suffix_set:
+  - push.apple.com
+ip_cidr_set:
+  - 17.0.0.0/8
+ip_cidr6_set:
+  - "2620:149:a44::/48"
+  - "2403:300:a42::/48"
+  - "2403:300:a51::/48"
+  - "2a01:b740:a42::/48"
