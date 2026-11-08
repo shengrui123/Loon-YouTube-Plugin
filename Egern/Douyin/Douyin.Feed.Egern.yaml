@@ -1,0 +1,19 @@
+name: 抖音資訊流廣告過濾
+description: 過濾資訊流 JSON 中明確標記為廣告的影片；需要啟用並信任 MITM 證書。
+author: shengrui123
+homepage: https://github.com/shengrui123/Loon-YouTube-Plugin
+
+scriptings:
+  - http_response:
+      name: 抖音資訊流廣告過濾
+      match: '^https://(?:[\w-]+\.)*amemv\.com/aweme/v[0-9]+/(?:feed|follow/feed|nearby/feed)/|^https://aweme\.snssdk\.com/aweme/v[0-9]+/(?:feed|follow/feed|nearby/feed)/'
+      script_url: https://raw.githubusercontent.com/shengrui123/Loon-YouTube-Plugin/main/Egern/Douyin/feed.js
+      body_required: true
+      max_size: 10485760
+      timeout: 10
+
+mitm:
+  hostnames:
+    includes:
+      - '*.amemv.com'
+      - aweme.snssdk.com
