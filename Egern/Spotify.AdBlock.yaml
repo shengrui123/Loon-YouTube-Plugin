@@ -1,0 +1,18 @@
+name: "Spotify 廣告網域攔截（實驗性）"
+description: "攔截部分 Spotify 廣告及廣告追蹤網域；無法保證移除播放中插播，也不會更改音質。"
+icon: "speaker.slash.fill"
+
+# 僅攔截相對明確的廣告相關網域；不攔截 Spotify 的共用播放 API 或音樂 CDN。
+rules:
+  - domain_suffix:
+      match: ads-fa.spotify.com
+      policy: REJECT
+  - domain_suffix:
+      match: audio-ads.spotify.com
+      policy: REJECT
+  - domain_suffix:
+      match: adeventtracker.spotify.com
+      policy: REJECT
+  - domain_suffix:
+      match: adstudio-assets.scdn.co
+      policy: REJECT

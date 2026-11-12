@@ -47,3 +47,7 @@
 ## Egern Apple Push 規則集
 
 Apple Push Notification service（APNs）的網域及 IPv4／IPv6 分流規則，包含精簡和廣泛涵蓋兩個版本。使用方式與限制請參閱 [Apple Push 規則集說明](./Egern/Apple-Push.README.md)。
+
+## Egern Spotify 廣告網域攔截
+
+實驗性攔截部分 Spotify 廣告相關網域。歌曲間插播及自動最高音質的限制與安裝方式，請參閱 [Spotify 模組說明](./Egern/Spotify.AdBlock.README.md)。
